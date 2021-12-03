@@ -15,51 +15,48 @@ mycursor = db.cursor()
 
 #GPIO Setuping part
 
-ID = 1
 channel = 17
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(channel, GPIO.IN)
-
-def callback(channel):
-
-	if GPIO.input(channel):
-		print "Sound Detected!"
-		now = datetime.now()
-		print now
-		dt_string = now.strftime("%Y-%m-%d %H:%M:%S")
-		print dt_string
-		n = random.randint(0,2500000)
-		print n
-		ugat = 1
-		mennyi = 0
-		egy = 1
-		sql = "INSERT INTO Ugatasok (ID, Date, Ugat) VALUES (%s, %s, %s)"
-		val = (n ,dt_string, ugat)
-		mycursor.execute(sql, val)
-		db.commit()
-		lekerdezes = "SELECT * FROM Ugatasok ORDER BY Date DESC LIMIT 5"
-		mycursor.execute(lekerdezes)
-		records = mycursor.fetchall()
-		for record in records:
-			if egy in record:
-				mennyi += 1
-				print "Ez a mennyi erteke"
-				print mennyi
-		if(mennyi == 5):
-			print "Siker!" 
-	else:
-		n = random.randint(0,2500000)
-		now = datetime.now()
-		dt_string = now.strftime("%Y-%m-%d %H:%M:%S")
-		ugat = 0
-		print "Sound not Detected!"
-		sql = "INSERT INTO Ugatasok (ID, Date, Ugat) VALUES (%s, %s, %s)"
-		val = (n, dt_string, ugat)
-		mycursor.execute(sql,val)
-		db.commit()
-GPIO.add_event_detect(channel, GPIO.BOTH, bouncetime=300)
-GPIO.add_event_callback(channel, callback)
+startdate = datetime(2000, 01, 01, 00, 00, 00)
+mennyi = 1
 
 while True:
-	time.sleep(1)
+	value = GPIO.input(channel)
+        if (value == 0):
+            print "Sound Detected!"
+	    time.sleep(2)
+	    now = datetime.now()
+	    print "Ennyi az ido:"
+            print now
+            n = random.randint(0,2500000)
+	    print "Az ID azonosito:"
+            print n
+            ugat = 1
+            sql = "INSERT INTO Ugatasok (ID, Date, Ugat) VALUES (%s, %s, %s)"
+            val = (n ,now, ugat)
+            mycursor.execute(sql, val)
+            db.commit()
+	    diffbettwominute = now.minute - startdate.minute
+            diffbettwosecond = now.second - startdate.second
+	    print "A kulonbseg a ketto ido kozott:"
+	    print diffbettwosecond
+	    time.sleep(5)
+	    if(diffbettwosecond < 30 and diffbettwosecond > -29):
+		if(diffbettwominute == 0):
+			print "kevesebb mint 30 a kulonbseg"
+			mennyi += 1
+			startdate = now
+			print "Az uj ido"
+			print startdate
+			print "Mennyiszer lepett ide be"
+			print mennyi
+	    else:
+		mennyi = 1
+		print "Uj ido"
+		startdate = now
+            if(mennyi == 5):
+                print "Siker!"
+
+
 
